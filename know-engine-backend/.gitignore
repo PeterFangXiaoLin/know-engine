@@ -7,4 +7,4 @@
 .env.*
 !.env.example
 /src/main/resources/application-local.yml
-/config/application-local.yml
+application-local.yml
