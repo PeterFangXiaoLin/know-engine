@@ -34,5 +34,5 @@ mybatis-plus:
 minio:
   access-key: ${MINIO_ACCESS_KEY:}
   secret-key: ${MINIO_SECRET_KEY:}
-  bucket-name: ${MINIO_BUCKET_NAME:rag-test}
+  bucket-name: ${MINIO_BUCKET_NAME:know-engine}
   endpoint: ${MINIO_ENDPOINT:http://111.229.99.8:9000}
