@@ -50,4 +50,12 @@ public interface KnowledgeDocumentService extends IService<KnowledgeDocument> {
      * @param docId 文档ID
      */
     void deleteDocument(Long docId);
+
+    /**
+     * 向量化并存储
+     *
+     * @param docId docId
+     * @return 是否成功
+     */
+    boolean embeddingAndStore(Long docId);
 }
