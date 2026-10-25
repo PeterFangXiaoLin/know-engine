@@ -9,6 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -41,21 +43,36 @@ public class FileStorageService {
         }
     }
 
-    // 上传文件
+    /**
+     * 上传用户文件，完成后关闭文件流。
+     *
+     * @param file 上传文件
+     * @param objectName MinIO 对象名称
+     * @return 文件访问URL
+     * @throws Exception 上传失败
+     */
     public String uploadFile(MultipartFile file, String objectName) throws Exception {
         createBucketIfNotExists(true);// 这里可根据你自己的情况改成false，如果改成false，需要在这个方法最后调一次getPresignedUrl
-        minioClient.putObject(PutObjectArgs.builder()
-                .bucket(bucketName)
-                .object(objectName)
-                .stream(file.getInputStream(), file.getSize(), -1)
-                .contentType(file.getContentType())
-                .build());
+        try (InputStream input = file.getInputStream()) {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .stream(input, file.getSize(), -1)
+                    .contentType(file.getContentType())
+                    .build());
+        }
         return String.format("%s/%s/%s", endpoint, bucketName, objectName);
 
     }
 
     /**
-     * 上传文件
+     * 上传字节内容，适用于改写后的 Markdown。
+     *
+     * @param objectName MinIO 对象名称
+     * @param content 文件字节
+     * @param contentType 文件媒体类型
+     * @return 文件访问URL
+     * @throws Exception 上传失败
      */
     public String uploadFile(String objectName, byte[] content, String contentType) throws Exception {
         createBucketIfNotExists(true);
@@ -73,7 +90,38 @@ public class FileStorageService {
         }
     }
 
-    // 下载文件（返回 InputStream）
+    /**
+     * 流式上传临时文件，避免将解析图片整体读入内存。
+     *
+     * @param objectName MinIO 对象名称
+     * @param file 本地文件路径
+     * @param contentType 文件媒体类型
+     * @return 文件访问URL
+     * @throws Exception 上传失败
+     */
+    public String uploadFile(String objectName, Path file, String contentType) throws Exception {
+        // 1. 确保存储桶可用。
+        createBucketIfNotExists(true);
+
+        // 2. 按文件实际长度流式上传，并关闭输入流。
+        try (InputStream input = Files.newInputStream(file)) {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .stream(input, Files.size(file), -1)
+                    .contentType(contentType)
+                    .build());
+        }
+        return String.format("%s/%s/%s", endpoint, bucketName, objectName);
+    }
+
+    /**
+     * 下载文件，由调用方关闭返回的输入流。
+     *
+     * @param objectName MinIO 对象名称
+     * @return 文件输入流
+     * @throws Exception 下载失败
+     */
     public InputStream downloadFile(String objectName) throws Exception {
         GetObjectResponse response = minioClient.getObject(
                 GetObjectArgs.builder()
@@ -83,7 +131,12 @@ public class FileStorageService {
         return response;
     }
 
-    // 删除文件
+    /**
+     * 删除指定 MinIO 对象。
+     *
+     * @param objectName MinIO 对象名称
+     * @throws Exception 删除失败
+     */
     public void deleteFile(String objectName) throws Exception {
         minioClient.removeObject(RemoveObjectArgs.builder()
                 .bucket(bucketName)
@@ -91,7 +144,13 @@ public class FileStorageService {
                 .build());
     }
 
-    // 生成临时下载链接（带签名，有效期 7 天）
+    /**
+     * 生成有效期为 7 天的签名下载链接。
+     *
+     * @param objectName MinIO 对象名称
+     * @return 签名下载URL
+     * @throws Exception 生成链接失败
+     */
     public String getPresignedUrl(String objectName) throws Exception {
         return minioClient.getPresignedObjectUrl(
                 GetPresignedObjectUrlArgs.builder()

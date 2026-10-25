@@ -1,11 +1,17 @@
 server:
   port: 8080
+  servlet:
+    context-path: /api
 
 spring:
   profiles:
     default: local
   application:
     name: know-engine-backend
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 210MB
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -31,3 +37,11 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
 
+mineru:
+  base-url: ${MINERU_BASE_URL:https://mineru.net}
+  token: ${MINERU_TOKEN:}
+  model-version: vlm
+  language: ch
+  http-timeout: 2m
+  poll-interval: 3s
+  poll-timeout: 10m
