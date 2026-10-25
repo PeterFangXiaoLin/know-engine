@@ -1,0 +1,4 @@
+KnowEngine frontend integration sample
+
+This file contains generated, non-personal test content.
+It verifies the multipart document upload endpoint.
