@@ -11,10 +11,8 @@ CREATE TABLE `knowledge_document`
     `extension`         TEXT NULL COMMENT '扩展字段，保存JSON字符串',
 
     PRIMARY KEY (`doc_id`),
-
     -- 为状态字段添加索引，优化定时任务扫表性能
     INDEX               `idx_status` (`status`),
-
     -- 复合索引：状态+文档ID，优化分页查询性能
     INDEX               `idx_status_doc_id` (`status`, `doc_id`)
 ) ENGINE=InnoDB
@@ -37,7 +35,6 @@ CREATE TABLE `knowledge_segment`
     `skip_embedding` INT NULL COMMENT '是否跳过嵌入生成',
 
     PRIMARY KEY (`id`),
-
     INDEX            `idx_segment_document_id` (`document_id`)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
