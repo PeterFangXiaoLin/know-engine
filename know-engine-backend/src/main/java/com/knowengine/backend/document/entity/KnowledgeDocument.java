@@ -4,14 +4,16 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.knowengine.backend.document.constant.DocumentStatus;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 知识文档，对应 knowledge_document 表，记录文档来源、可见范围和处理状态。
  */
-@Data
+@Getter
+@Setter
 @TableName("knowledge_document")
-public class KnowledgeDocument {
+public class KnowledgeDocument extends BaseEntity {
 
     /**
      * 文档ID，数据库自增主键。

@@ -15,7 +15,7 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3307/know_engine?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3307/know_engine?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
     username: root
     password: 123456
     druid:
@@ -31,6 +31,35 @@ spring:
         enabled: false
       web-stat-filter:
         enabled: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+#      password: 你的 password
+      ssl:
+        enabled: true
+  redis:
+    redisson:
+      config: |
+        singleServerConfig:
+          idleConnectionTimeout: 10000
+          connectTimeout: 10000
+          timeout: 3000
+          retryAttempts: 3
+          retryInterval: 1500
+          subscriptionsPerConnection: 5
+          clientName: null
+          address: "redis://localhost:6379"
+          subscriptionConnectionMinimumIdleSize: 1
+          subscriptionConnectionPoolSize: 50
+          connectionMinimumIdleSize: 24
+          connectionPoolSize: 64
+          database: 0
+          dnsMonitoringInterval: 5000
+        threads: 16
+        nettyThreads: 32
+        codec: !<org.redisson.codec.JsonJacksonCodec> {}
+        transportMode: "NIO"
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml

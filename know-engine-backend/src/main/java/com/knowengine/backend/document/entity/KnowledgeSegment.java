@@ -4,14 +4,16 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.knowengine.backend.document.constant.SegmentStatus;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 知识片段，对应 knowledge_segment 表，保存文档分块后的文本及嵌入信息。
  */
-@Data
+@Getter
+@Setter
 @TableName("knowledge_segment")
-public class KnowledgeSegment {
+public class KnowledgeSegment extends BaseEntity {
 
     /**
      * 片段ID，数据库自增主键。

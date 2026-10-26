@@ -392,16 +392,42 @@ AI 生成增删改查代码
 
 ### 阶段性代码优化
 
-1. 数据库增加通用字段
-2. 状态调整
+#### 1、数据库增加通用字段
 
-3. 加索引
+```sql
+ALTER TABLE `knowledge_document`
+    ADD COLUMN `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    ADD COLUMN `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    ADD COLUMN `lock_version` INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    ADD COLUMN `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除标记：0-未删除，1-已删除';
+
+ALTER TABLE `knowledge_segment`
+    ADD COLUMN `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    ADD COLUMN `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    ADD COLUMN `lock_version` INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    ADD COLUMN `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除标记：0-未删除，1-已删除';
+```
 
 
 
-打端点，dubug启动如果断点变成勾表示能进来
+1. 状态调整
+
+2. 加索引
+
+
+
+打断点，dubug启动如果断点变成勾表示能进来
 
 
 
 增加分布式锁
+
+1. upload 针对用户加锁，限制同一个用户同上上传多份文档
+2. split 和 embedAndStore 针对 documentId 加锁，即同一份文档不能同时执行
+
+设置 waitTime = 0 ， 即不等待
+
+
+
+
 
