@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 9090
   servlet:
     context-path: /api
 
@@ -45,3 +45,13 @@ mineru:
   http-timeout: 2m
   poll-interval: 3s
   poll-timeout: 10m
+
+# XXL-Job 配置
+xxl:
+  job:
+    admin:
+      addresses: http://127.0.0.1:8080/ # xxl-job-admin 地址，记得改成你自己的
+    executor:
+      enabled: true
+      appname: know-engine-executor # 执行器名称
+      accessToken: default_token
