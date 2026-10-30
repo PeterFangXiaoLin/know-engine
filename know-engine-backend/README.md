@@ -350,6 +350,41 @@ AI 生成增删改查代码
 
 
 
+1. 校验 参数 以及 url
+2. 校验 document 状态
+   1. 如果状态是已切分，则查询切分出的chunk的数量返回
+   2. 如果不是已转化的状态，则抛异常
+3. 从 url 解析出 objectname，通过 objectname 拿到 input流
+4. 判断文件类型是否是excel
+   1. excel: 表头：单元格内容；...
+   2. 非 excel: 通过工厂方法 获取对应参数需要的 splitter 调用 splitter.split 完成文档切分，并返回 List<TextSegmemt>
+5. 把 切分之后的 TextSegment 转成 KnowledgeSegment，并收集到 list 中
+   1. 把 text 作为 text
+   2. metadata 富化
+      1. documentId 加到 metadata中
+      2. 文件名称
+      3. chunkId
+      4. 权限
+   3. 设置 documentId， 为传入的 docmentId
+   4. 设置 chunk Order
+   5. 设置是否 跳过向量化（父chunk 不需要进行向量化）
+   6. 设置 segement status
+6. 批量保存片段，更新文档状态，mybatis-plus save batch 需要开启 才是 真正的 values(),()
+7. 发送文档已分段事件
+8. 返回 切分出来的数量
+
+
+
+#### MarkdownHeaderParentTextSplitter
+
+1、 先删除文档中的空行
+
+2、 从 document 中获得元数据，这些元数据作为 baseMetadata
+
+3、 按元数据进行切分
+
+
+
 
 
 ## 向量存储 - ES
@@ -429,5 +464,18 @@ ALTER TABLE `knowledge_segment`
 
 
 
+KnowledgeDocument 增加字段
 
+1. description 用于文档的描述
+2. knowledge_base_type 知识库类型
+
+
+
+* 允许用户填写文档标题，而不是使用文件名称
+
+* 工厂模式，处理不同文件类型
+
+
+
+## 会话
 

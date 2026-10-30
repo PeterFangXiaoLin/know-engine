@@ -116,11 +116,13 @@ public class MarkdownHeaderParentTextSplitter implements DocumentSplitter {
      */
     public MarkdownHeaderParentTextSplitter(Map<String, String> headersToSplitOn, boolean returnEachLine, boolean stripHeaders, int chunkSize, int overlap) {
         // 按标题标记长度倒序排列，确保优先匹配更长的标记（如"###"优先于"##"）
+        // 根据标题级数构造
+        // [{###, subsubtitle}, {##, subtitle}, {#, title}]
         this.headersToSplitOn = headersToSplitOn.entrySet().stream()
                 .sorted(Comparator.comparingInt(e -> -e.getKey().length()))
                 .collect(Collectors.toList());
-        this.returnEachLine = returnEachLine;
-        this.stripHeaders = stripHeaders;
+        this.returnEachLine = returnEachLine; // 是否按行返回结果，false时会聚合相同元数据的行
+        this.stripHeaders = stripHeaders; // 在结果中移除标题行
         this.chunkSize = chunkSize;
         this.overlap = overlap;
     }
@@ -212,6 +214,8 @@ public class MarkdownHeaderParentTextSplitter implements DocumentSplitter {
             // 检测并处理标题行
             interrupted:
             {
+                // ###### subsubsubsubsubtitle
+                // # title
                 for (Map.Entry<String, String> header : headersToSplitOn) {
                     String sep = header.getKey();    // 标题标记，如"#"、"##"
                     String name = header.getValue(); // 元数据中的键名
