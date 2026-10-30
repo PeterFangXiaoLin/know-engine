@@ -52,3 +52,7 @@ ALTER TABLE `knowledge_segment`
     ADD COLUMN `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     ADD COLUMN `lock_version` INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     ADD COLUMN `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除标记：0-未删除，1-已删除';
+
+ALTER TABLE `knowledge_document`
+    ADD COLUMN `description` VARCHAR(512) COMMENT '文档描述',
+    ADD COLUMN `knowledge_base_type` VARCHAR(32) COMMENT '知识库类型：DOCUMENT_SEARCH, DATA_QUERY';

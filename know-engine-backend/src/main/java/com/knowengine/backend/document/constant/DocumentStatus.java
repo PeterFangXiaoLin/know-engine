@@ -32,5 +32,10 @@ public enum DocumentStatus {
     /**
      * 向量存储完成
      */
-    VECTOR_STORED
+    VECTOR_STORED,
+
+    /**
+     * 存储完成（不需要向量存储的使用这个状态）
+     */
+    STORED;
 }

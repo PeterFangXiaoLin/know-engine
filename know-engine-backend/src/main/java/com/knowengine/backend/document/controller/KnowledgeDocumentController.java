@@ -1,12 +1,12 @@
 package com.knowengine.backend.document.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.knowengine.backend.document.constant.DocumentStatus;
+import com.knowengine.backend.document.dto.DocumentSplitParam;
+import com.knowengine.backend.document.dto.DocumentUploadParam;
 import com.knowengine.backend.document.dto.KnowledgeDocumentQuery;
 import com.knowengine.backend.document.dto.KnowledgeDocumentRequest;
 import com.knowengine.backend.document.entity.KnowledgeDocument;
-import com.knowengine.backend.document.service.FileStorageService;
-import com.knowengine.backend.document.service.FileProcessService;
+import com.knowengine.backend.document.service.DocumentProcessService;
 import com.knowengine.backend.document.service.KnowledgeDocumentService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -14,16 +14,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
-import java.util.UUID;
 
 /**
  * 知识文档管理接口，校验请求后交由业务服务处理。
@@ -38,9 +34,7 @@ public class KnowledgeDocumentController {
 
     private final KnowledgeDocumentService documentService;
 
-    private final FileStorageService fileStorageService;
-
-    private final FileProcessService fileProcessService;
+    private final DocumentProcessService documentProcessService;
 
     private final Tika tika;
 
@@ -51,60 +45,40 @@ public class KnowledgeDocumentController {
      * @param uploadUser   上传用户
      * @param accessibleBy 文件可见范围
      * @return 包含原始文件URL、转换后URL和最新状态的文档
+     * @throws IOException 文档转换或文件读取失败
      */
     @PostMapping("/upload")
     public KnowledgeDocument uploadFile(
             @RequestParam("file") MultipartFile file,
+            @RequestParam("title") String title,
             @RequestParam("uploadUser") String uploadUser,
-            @RequestParam(value = "accessibleBy", required = false) String accessibleBy) {
-        if (file.isEmpty() || !StringUtils.hasText(file.getOriginalFilename())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "请选择非空文件");
-        }
-        KnowledgeDocument document = new KnowledgeDocument();
-        try {
-            // 1. 检测文件类型并上传原始文件；独立对象前缀避免同名文件相互覆盖。
-            String fileName = file.getOriginalFilename().replace('\\', '/');
-            fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
-            boolean pdf = isPdfFile(fileName) || isPdfContent(file);
-            String fileUrl = fileStorageService.uploadFile(file, "documents/original/" + UUID.randomUUID() + "/" + fileName);
-
-            // 2. 保存已上传文档，后续转换失败时仍保留原始文件和文档记录。
-            document.setDocTitle(fileName);
-            document.setUploadUser(uploadUser);
-            document.setDocUrl(fileUrl);
-            document.setStatus(DocumentStatus.UPLOADED);
-            document.setAccessibleBy(accessibleBy);
-
-            if (!documentService.save(document)) {
-                throw new IOException("保存文档记录失败");
-            }
-
-            // 3. PDF 由处理服务完成 MinerU 解析、产物存储和状态更新。
-            if (pdf) {
-                try (InputStream input = file.getInputStream()) {
-                    return fileProcessService.processDocument(document, input);
-                }
-            }
-
-            // 4. 非 PDF 沿用原始地址作为转换结果。
-            KnowledgeDocument update = new KnowledgeDocument();
-            update.setDocId(document.getDocId());
-            update.setStatus(DocumentStatus.CONVERTED);
-            update.setConvertedDocUrl(fileUrl);
-            if (!documentService.updateById(update)) {
-                throw new IOException("保存文档转换状态失败");
-            }
-            document.setStatus(DocumentStatus.CONVERTED);
-            document.setConvertedDocUrl(fileUrl);
-            return document;
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (Exception e) {
-            log.warn("文件上传或转换失败，documentId={}，异常类型={}", document.getDocId(), e.getClass().getSimpleName());
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "文件上传或转换失败，documentId=" + document.getDocId() + "，已保存文档的转换原因可查看 extension.mineru", e);
-        }
+            @RequestParam("description") String description,
+            @RequestParam("knowledgeBaseType") String knowledgeBaseType,
+            @RequestParam(value = "accessibleBy", required = false) String accessibleBy) throws IOException {
+        return documentProcessService.upload(new DocumentUploadParam(file, title, accessibleBy, description, knowledgeBaseType), uploadUser);
     }
+
+    /**
+     * 对文档进行切分
+     * 注意：此方法为手动触发切分接口，正常流程由事件驱动自动执行
+     *
+     * @param documentId 文档ID
+     * @return 切分后的片段数量
+     */
+    @PostMapping("/split/{documentId}")
+    public Integer splitDocument(@PathVariable Long documentId,
+                                 @RequestParam("splitType") String splitType,
+                                 @RequestParam("chunkSize") Integer chunkSize,
+                                 @RequestParam(value = "overlap", required = false) Integer overlap,
+                                 @RequestParam(value = "regex", required = false) String regex,
+                                 @RequestParam(value = "titleLevel", required = false) Integer titleLevel,
+                                 @RequestParam(value = "separator", required = false) String separator) {
+        KnowledgeDocument document = documentService.getById(documentId);
+        return documentProcessService.split(document,
+                new DocumentSplitParam(splitType, chunkSize, overlap, titleLevel, separator, regex));
+    }
+
+
 
     /**
      * 查询文档详情。
@@ -131,7 +105,7 @@ public class KnowledgeDocumentController {
     /**
      * 更新文档内容。
      *
-     * @param docId 文档ID
+     * @param docId   文档ID
      * @param request 更新内容
      * @return 更新后的文档
      */

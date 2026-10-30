@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.knowengine.backend.document.constant.DocumentStatus;
+import com.knowengine.backend.document.constant.KnowledgeBaseType;
+import com.knowengine.backend.document.dto.DocumentUploadParam;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -53,7 +55,26 @@ public class KnowledgeDocument extends BaseEntity {
     private String accessibleBy;
 
     /**
+     * 文档描述
+     */
+    private String description;
+
+    /**
+     * 知识库类型
+     */
+    private KnowledgeBaseType knowledgeBaseType;
+
+    /**
      * 扩展字段，用于保存 JSON 字符串。
      */
     private String extension;
+
+    public KnowledgeDocument create(DocumentUploadParam documentUploadParam) {
+        this.setDocTitle(documentUploadParam.title());
+        this.setStatus(DocumentStatus.UPLOADED);
+        this.setDescription(documentUploadParam.description());
+        this.setKnowledgeBaseType(KnowledgeBaseType.valueOf(documentUploadParam.knowledgeBaseType()));
+        this.setAccessibleBy(documentUploadParam.accessibleBy());
+        return this;
+    }
 }
